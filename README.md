@@ -37,6 +37,12 @@ A comprehensive user management microservice built with Node.js, Express, TypeSc
 - **Security**: `cors`
 - **Development**: `concurrently`, `nodemon`
 
+### Containerization
+- **Docker**: Multi-stage Docker build for optimized production images
+- **Docker Hub**: [sajjad6ansari/user_service](https://hub.docker.com/repository/docker/sajjad6ansari/user_service)
+- **Base Image**: Node.js 22 Alpine for lightweight containers
+- **Build Strategy**: Separate build and runtime stages for smaller images
+
 ## 📁 Project Structure
 
 ```
@@ -164,7 +170,72 @@ Cloud_Api_Secret=your_cloudinary_api_secret
    npm start
    ```
 
-## 🔒 Security Features
+## � Docker Deployment
+
+### Dockerfile Configuration
+The service uses a multi-stage Docker build for optimized production images:
+
+```dockerfile
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
+
+FROM node:22-alpine 
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --only=production
+
+COPY --from=builder /app/dist ./dist
+
+CMD ["node", "dist/server.js"]
+```
+
+### Docker Hub Repository
+- **Image**: [sajjad6ansari/user_service](https://hub.docker.com/repository/docker/sajjad6ansari/user_service)
+- **Tags**: Available with version tags and `latest`
+
+### Docker Commands
+
+#### Build Local Image
+```bash
+docker build -t user-service .
+```
+
+#### Run Container
+```bash
+docker run -d \
+  --name user-service \
+  -p 5000:5000 \
+  --env-file .env \
+  user-service
+```
+
+#### Pull from Docker Hub
+```bash
+docker pull sajjad6ansari/user_service:latest
+docker run -d \
+  --name user-service \
+  -p 5000:5000 \
+  --env-file .env \
+  sajjad6ansari/user_service:latest
+```
+
+### Multi-Stage Build Benefits
+- **Smaller Image Size**: Production image excludes development dependencies
+- **Security**: Reduces attack surface by excluding build tools
+- **Performance**: Faster deployment with optimized layers
+- **Efficiency**: TypeScript compilation in build stage only
+
+## �🔒 Security Features
 
 ### JWT Authentication
 - **Token Expiration**: 5-day token lifetime
